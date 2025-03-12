@@ -25,21 +25,25 @@ def generate_launch_description():
         .to_moveit_configs()
     )
 
-    example_file = DeclareLaunchArgument(
-        "example_file",
-        default_value="motion_planning_python_api_tutorial.py",
-        description="Python API tutorial file name",
+    static_tf = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="static_transform_publisher",
+        output="log",
+        arguments=["--frame-id", "world", "--child-frame-id", "panda_link0"],
+        # arguments=["0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "world", "panda_link0"],
     )
 
-    moveit_py_node = Node(
-        name="moveit_py",
-        package="mtc_tutorial",
-        executable=LaunchConfiguration("example_file"),
-        output="both",
-        parameters=[moveit_config.to_dict()],
+    robot_state_publisher = Node(
+        package="robot_state_publisher",
+        executable="robot_state_publisher",
+        name="robot_state_publisher",
+        output="log",
+        parameters=[moveit_config.robot_description],
     )
 
     rviz_config_file = get_package_share_directory("mtc_tutorial") + "/config/motion_planning_python_api_tutorial.rviz"
+    # rviz_config_file = get_package_share_directory("mtc_tutorial") + "/launch/mtc.rviz"
 
     rviz_node = Node(
         package="rviz2",
@@ -53,22 +57,6 @@ def generate_launch_description():
         ],
     )
 
-    static_tf = Node(
-        package="tf2_ros",
-        executable="static_transform_publisher",
-        name="static_transform_publisher",
-        output="log",
-        arguments=["--frame-id", "world", "--child-frame-id", "panda_link0"],
-    )
-
-    robot_state_publisher = Node(
-        package="robot_state_publisher",
-        executable="robot_state_publisher",
-        name="robot_state_publisher",
-        output="log",
-        parameters=[moveit_config.robot_description],
-    )
-
     ros2_controllers_path = os.path.join(
         get_package_share_directory("moveit_resources_panda_moveit_config"),
         "config",
@@ -77,10 +65,8 @@ def generate_launch_description():
     ros2_control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
-        parameters=[ros2_controllers_path],
-        remappings=[
-            ("/controller_manager/robot_description", "/robot_description"),
-        ],
+        parameters=[moveit_config.to_dict(),ros2_controllers_path],
+        remappings=[("/controller_manager/robot_description", "/robot_description")],
         output="log",
     )
 
@@ -96,16 +82,14 @@ def generate_launch_description():
                 shell=True,
                 output="log",
             )
-        ]
+        ]    
 
     return LaunchDescription(
         [
-            example_file,
-            moveit_py_node,
             robot_state_publisher,
-            ros2_control_node,
-            rviz_node,
             static_tf,
-        ]
+            rviz_node,
+            ros2_control_node
+        ] 
         + load_controllers
     )

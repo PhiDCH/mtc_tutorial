@@ -32,9 +32,8 @@ def generate_launch_description():
     )
 
     # RViz
-    rviz_config_file = (
-        get_package_share_directory("moveit2_tutorials") + "/launch/mtc.rviz"
-    )
+    rviz_config_file = (get_package_share_directory("moveit2_tutorials") + "/launch/mtc.rviz")
+    # rviz_config_file = get_package_share_directory("mtc_tutorial") + "/config/motion_planning_python_api_tutorial.rviz"
     rviz_node = Node(
         package="rviz2",
         executable="rviz2",
@@ -100,7 +99,7 @@ def generate_launch_description():
             rviz_node,
             static_tf,
             robot_state_publisher,
-            # run_move_group_node,
+            run_move_group_node,
             ros2_control_node,
         ]
         + load_controllers
